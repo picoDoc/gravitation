@@ -29,6 +29,9 @@ GREY = (128, 128, 128)
 
 async def main():
     """Main game function containing the game loop and logic."""
+
+    platform.console.log("hi there")
+    
     # Initialize pygame
     pygame.init()
     
