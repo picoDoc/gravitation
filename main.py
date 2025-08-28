@@ -65,11 +65,11 @@ async def main():
                 running = False
 
         # Setup ps4 controller
-        if joystick is None and pygame.joystick.get_count() > 0:
-            # TODO figure out something more robust to pick the right controller
-            joystick = pygame.joystick.Joystick(1)
-            joystick.init()
-            platform.console.log(f"Controller detected: {joystick.get_name()}")
+        #if joystick is None and pygame.joystick.get_count() > 0:
+        #    # TODO figure out something more robust to pick the right controller
+        #    joystick = pygame.joystick.Joystick(1)
+        #    joystick.init()
+        #    platform.console.log(f"Controller detected: {joystick.get_name()}")
 
         # Handle continuous key presses
         keys = pygame.key.get_pressed()
