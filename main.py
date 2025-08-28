@@ -11,7 +11,7 @@ async def main():
 
     while True:
         print(f"{count}: Hello from Pygame")
-        screen.fill(WHITE)
+        screen.fill((255, 255, 255))
         pygame.display.update()
         await asyncio.sleep(0)  # You must include this statement in your main loop. Keep the argument at 0.
 
