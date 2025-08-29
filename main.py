@@ -66,8 +66,11 @@ async def main():
 
         # Setup ps4 controller
         if joystick is None and pygame.joystick.get_count() > 0:
-            # TODO figure out something more robust to pick the right controller
-            joystick = pygame.joystick.Joystick(1)
+            # TODO figure out something more robust to pick the right controller (on mobile especially)
+            for i in range(pygame.joystick.get_count()):
+                if 'Wireless Controller' in pygame.joystick.Joystick(i).get_name():
+                    joystick = pygame.joystick.Joystick(i)
+                    break
             joystick.init()
             platform.console.log(f"Controller detected: {joystick.get_name()}")
 
