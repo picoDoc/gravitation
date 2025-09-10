@@ -196,7 +196,7 @@ class RequestHandler:
     """
 
     GET = "GET"
-    POST = "POST"
+    PUT = "PUT"
     _js_code = ""
     _init = False
 
@@ -220,13 +220,14 @@ class RequestHandler:
 window.Fetch = {}
 // generator functions for async fetch API
 // script is meant to be run at runtime in an emscripten environment
-// Fetch API allows data to be posted along with a POST request
-window.Fetch.POST = function * POST (url, data)
+// Fetch API allows data to be posted along with a PUT request
+window.Fetch.PUT = function * PUT (url, data)
 {
-    // post info about the request
-    console.log('POST: ' + url + 'Data: ' + data);
-    var request = new Request(url, {headers: {'Accept': 'application/json','Content-Type': 'application/json'},
-        method: 'POST',
+    // put info about the request
+    console.log('PUT: ' + url + 'Data: ' + data);
+    var request = new Request(url, {
+        headers: {'Accept': 'application/json','Content-Type': 'application/json', 'X-Access-Key': '$2a$10$UVKtCsJ8xwmUxih3HQNDg.yhUb1a0sv9x.ihvgIbIUGCkcoStCw6y'},
+        method: 'PUT',
         body: data});
     var content = 'undefined';
     fetch(request)
@@ -250,7 +251,7 @@ window.Fetch.POST = function * POST (url, data)
 window.Fetch.GET = function * GET (url)
 {
     console.log('GET: ' + url);
-    var request = new Request(url, { method: 'GET' })
+    var request = new Request(url, { method: 'GET', headers: {'X-Access-Key': '$2a$10$UVKtCsJ8xwmUxih3HQNDg.yhUb1a0sv9x.ihvgIbIUGCkcoStCw6y'} })
     var content = 'undefined';
     fetch(request)
    .then(resp => resp.text())
@@ -308,24 +309,24 @@ window.Fetch.GET = function * GET (url)
                 self.print(content)
             self.result = content
         else:
-            self.result = self.requests.get(url, params).text
+            self.result = self.requests.get(url, params, headers={"X-Access-Key": "$2a$10$UVKtCsJ8xwmUxih3HQNDg.yhUb1a0sv9x.ihvgIbIUGCkcoStCw6y"}).text
         return self.result
 
     # def get(self, url, params=None, doseq=False):
     #     return await self._get(url, params, doseq)
 
-    async def post(self, url, data=None):
+    async def put(self, url, data=None):
         if data is None:
             data = {}
         if self.is_emscripten:
             await asyncio.sleep(0)
-            content = await platform.jsiter(platform.window.Fetch.POST(url, json.dumps(data)))
+            content = await platform.jsiter(platform.window.Fetch.PUT(url, json.dumps(data)))
             if self.debug:
                 self.print(content)
             self.result = content
         else:
-            self.result = self.requests.post(
-                url, data, headers={"Accept": "application/json", "Content-Type": "application/json"}
+            self.result = self.requests.put(
+                url, data, headers={"Accept": "application/json", "Content-Type": "application/json", "X-Access-Key": "$2a$10$UVKtCsJ8xwmUxih3HQNDg.yhUb1a0sv9x.ihvgIbIUGCkcoStCw6y"}
             ).text
         return self.result
 
