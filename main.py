@@ -433,6 +433,7 @@ async def main():
                     if timer_text < SCOREBOARD[selected_level.name].get(USERNAME, '59:59.000'):
                         SCOREBOARD[selected_level.name][USERNAME] = timer_text
                         SCOREBOARD = await update_scoreboard(level=selected_level.name, user=USERNAME, time=timer_text)
+                        menu_state = MenuState(SCREEN_WIDTH, SCREEN_HEIGHT, SCOREBOARD)
 
                 # Show completion message briefly, then return to menu
                 completion_text = timer_font.render("Level Complete! Returning to menu...", True, WHITE)
