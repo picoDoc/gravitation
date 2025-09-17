@@ -27,7 +27,7 @@ class MenuState:
         self.scoreboard = scoreboard or {}
         
         # Menu display constants
-        self.THUMBNAIL_SIZE = (512, 288)  # Thumbnail dimensions
+        self.THUMBNAIL_SIZE = (384, 432)  # Thumbnail dimensions (narrower width)
         self.THUMBNAIL_SPACING = 50      # Space between thumbnails
         self.MENU_TITLE_SIZE = 72
         self.LEVEL_NAME_SIZE = 36
@@ -74,8 +74,30 @@ class MenuState:
             # Load the level image
             level_image = pygame.image.load(level_info.filename)
             
-            # Scale to thumbnail size
-            level_info.thumbnail = pygame.transform.scale(level_image, self.THUMBNAIL_SIZE)
+            # Scale image while preserving aspect ratio
+            original_width, original_height = level_image.get_size()
+            target_width, target_height = self.THUMBNAIL_SIZE
+            
+            # Calculate scale factor to fit within thumbnail bounds
+            scale_x = target_width / original_width
+            scale_y = target_height / original_height
+            scale = min(scale_x, scale_y)  # Use smaller scale to fit within bounds
+            
+            # Calculate new dimensions
+            new_width = int(original_width * scale)
+            new_height = int(original_height * scale)
+            
+            # Scale the image preserving aspect ratio
+            scaled_image = pygame.transform.scale(level_image, (new_width, new_height))
+            
+            # Create thumbnail surface and center the scaled image
+            level_info.thumbnail = pygame.Surface(self.THUMBNAIL_SIZE)
+            level_info.thumbnail.fill(self.BLACK)  # Fill background
+            
+            # Center the scaled image on the thumbnail
+            x_offset = (target_width - new_width) // 2
+            y_offset = (target_height - new_height) // 2
+            level_info.thumbnail.blit(scaled_image, (x_offset, y_offset))
             
         except pygame.error as e:
             print(f"Error loading level {level_info.filename}: {e}")
@@ -138,27 +160,16 @@ class MenuState:
             if level_info.thumbnail:
                 screen.blit(level_info.thumbnail, level_info.thumbnail_rect)
             
-            # Draw level name to the right of thumbnail
-            name_text = self.level_font.render(level_info.name, True, self.WHITE)
-            name_rect = name_text.get_rect(left=(thumbnail_x + self.THUMBNAIL_SIZE[0] + 20),
-                                          centery=(thumbnail_y + self.THUMBNAIL_SIZE[1] // 4))
-            screen.blit(name_text, name_rect)
-            
-            # Draw scoreboard information below level name
-            scoreboard_y = name_rect.bottom + 10
+            # Draw scoreboard information to the right of thumbnail
+            scoreboard_y = thumbnail_y + 20
             if self.scoreboard and level_info.name in self.scoreboard:
                 level_scores = self.scoreboard[level_info.name]
                 if level_scores:
                     # Sort scores by time (assuming time format is comparable as string)
                     sorted_scores = sorted(level_scores.items(), key=lambda x: x[1])
                     
-                    # Display top 3 scores
-                    scores_text = self.level_font.render("Best Times:", True, self.BLUE)
-                    scores_rect = scores_text.get_rect(left=(thumbnail_x + self.THUMBNAIL_SIZE[0] + 20), top=scoreboard_y)
-                    screen.blit(scores_text, scores_rect)
-                    
                     # Display individual scores
-                    current_y = scores_rect.bottom + 5
+                    current_y = scoreboard_y
                     for idx, (player, time) in enumerate(sorted_scores[:3]):  # Show top 3
                         score_text = f"{idx + 1}. {player}: {time}"
                         score_surface = self.level_font.render(score_text, True, self.WHITE)
