@@ -256,11 +256,11 @@ class GameStateManager:
             self.spaceship.apply_thrust(thrust)
             self.spaceship.apply_rotation(rotate_left, rotate_right, self.current_level)
     
-    def update_gameplay(self):
-        """Update gameplay logic"""
+    def update_gameplay(self, delta_time=1.0):
+        """Update gameplay logic with frame-rate independent physics"""
         if not self.level_completed and self.spaceship and self.current_level:
-            # Update spaceship physics
-            self.spaceship.update()
+            # Update spaceship physics with delta_time for frame-rate independence
+            self.spaceship.update(delta_time)
             
             # Record current spaceship state for ghost system
             if self.ghost_recorder.is_recording():

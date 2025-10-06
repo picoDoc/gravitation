@@ -6,8 +6,8 @@ class Spaceship(Entity):
     """Spaceship entity with thrust and rotation capabilities"""
     
     # Physics constants - preserved from original main.py
-    GRAVITY = 0.15
-    THRUST_POWER = 0.35
+    GRAVITY = 0.12
+    THRUST_POWER = 0.25
     ROTATION_SPEED = 6
     MAX_VELOCITY = 15
     MIN_VELOCITY = -15

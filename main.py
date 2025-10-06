@@ -41,6 +41,7 @@ async def main():
     
     # Game loop
     clock = pygame.time.Clock()
+    delta_time = 1.0  # Initialize delta_time for first frame
     
     while game_manager.is_running():
         # Handle pygame events
@@ -60,8 +61,8 @@ async def main():
             # Handle game input
             game_manager.handle_game_input()
             
-            # Update gameplay logic
-            game_manager.update_gameplay()
+            # Update gameplay logic with delta_time for frame-rate independent physics
+            game_manager.update_gameplay(delta_time)
             
             # Check for level completion
             if game_manager.is_level_completed():
@@ -83,8 +84,11 @@ async def main():
         # Update display
         game_manager.renderer.update_display()
         
-        # Control frame rate (preserved from original)
-        clock.tick(60)
+        # Control frame rate and calculate delta_time for frame-rate independent physics
+        # clock.tick(60) returns milliseconds elapsed since last call
+        dt_ms = clock.tick(60)
+        # Normalize to a standard 60 FPS frame (16.67ms)
+        delta_time = dt_ms / 16.67
         await asyncio.sleep(0)  # This line is critical; ensure you keep the sleep time at 0
     
     # Quit (preserved from original)
