@@ -46,11 +46,12 @@ class MenuState:
     
     def initialize_levels(self):
         """Initialize the available levels"""
-        # Add the three levels as specified
+        # Add the four levels as specified
         self.levels = [
             LevelInfo("Ryan Level", "ryan_level.png"),
             LevelInfo("John Level", "john_level.png"),
-            LevelInfo("Martin Level", "martin_level.png")
+            LevelInfo("Martin Level", "martin_level.png"),
+            LevelInfo("Slalom Level", "slalom.png")
         ]
         
         # Generate thumbnails for each level

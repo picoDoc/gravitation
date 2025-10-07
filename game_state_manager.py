@@ -29,7 +29,8 @@ class GameStateManager:
         self.best_ghost_urls = {
             "Ryan Level": "https://api.jsonbin.io/v3/b/68c43384d0ea881f407ba93b",
             "John Level": "https://api.jsonbin.io/v3/b/68ca94be43b1c97be945f7db",
-            "Martin Level": "https://api.jsonbin.io/v3/b/68ca94d343b1c97be945f7f6"
+            "Martin Level": "https://api.jsonbin.io/v3/b/68ca94d343b1c97be945f7f6",
+            "Slalom Level": "https://api.jsonbin.io/v3/b/68e536d543b1c97be95dbc50"
         }
         
         # Initialize components (menu_state will be created after scoreboard loads)
@@ -274,9 +275,15 @@ class GameStateManager:
             # Check for collision with level geometry
             spaceship_image, collision_x, collision_y = self.spaceship.get_collision_rect_info()
             if spaceship_image:
-                solid_collision, special_collision = self.current_level.check_spaceship_collisions(
+                solid_collision, special_collision, hazard_collision = self.current_level.check_spaceship_collisions(
                     spaceship_image, collision_x, collision_y
                 )
+                
+                # Check for hazard zone collision (red zones) - reset level immediately
+                if hazard_collision:
+                    print("Hazard zone touched - resetting level!")
+                    self.reset_current_level()
+                    return
                 
                 # Check for target zone collision (special zones)
                 if special_collision:
@@ -305,36 +312,25 @@ class GameStateManager:
                 if collision_occurred:
                     print(collision_reason)
                     
-                    # Determine bounce direction based on collision type
+                    # Determine how to handle collision based on type
                     if collision_reason == "Screen boundary collision detected!":
-                        # For screen boundaries, determine bounce direction from which boundary was hit
+                        # For screen boundaries, use simple axis-aligned bouncing
                         bounce_x, bounce_y = self.spaceship.get_boundary_collision_type(
                             self.screen_width, self.screen_height
                         )
+                        self.spaceship.handle_collision(bounce_x, bounce_y)
                     else:
-                        # For level geometry collisions, check the prev positions to determine bounce direction
-                        prev_x, prev_y = self.spaceship.physics.get_previous_position()
+                        # For level geometry collisions, use normal-based reflection
+                        # Calculate the center point of the spaceship for normal calculation
+                        center_x = collision_x + spaceship_image.get_width() // 2
+                        center_y = collision_y + spaceship_image.get_height() // 2
                         
-                        # Check prev x position collision
-                        prev_collision_x = (prev_x + self.spaceship.renderer.original_image.get_width() // 2 -
-                                           spaceship_image.get_width() // 2)
-                        solid_collision_x_back, _ = self.current_level.check_spaceship_collisions(
-                            spaceship_image, prev_collision_x, collision_y
+                        # Apply collision handling with normal-based physics
+                        self.spaceship.handle_collision(
+                            level=self.current_level,
+                            collision_x=center_x,
+                            collision_y=center_y
                         )
-                        
-                        # Check prev y position collision
-                        prev_collision_y = (prev_y + self.spaceship.renderer.original_image.get_height() // 2 -
-                                           spaceship_image.get_height() // 2)
-                        solid_collision_y_back, _ = self.current_level.check_spaceship_collisions(
-                            spaceship_image, collision_x, prev_collision_y
-                        )
-                        
-                        # If moving back in the direction of travel removes collision, bounce in that direction
-                        bounce_x = not solid_collision_x_back
-                        bounce_y = not solid_collision_y_back
-                    
-                    # Apply collision handling
-                    self.spaceship.handle_collision(bounce_x, bounce_y)
         
         # Update timer only if level not completed
         if not self.level_completed:

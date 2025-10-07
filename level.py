@@ -122,7 +122,7 @@ class Level:
     
     def check_spaceship_collisions(self, spaceship_surface, spaceship_x, spaceship_y):
         """
-        Check for pixel-perfect collision between spaceship and level for both SOLID and SPECIAL zones.
+        Check for pixel-perfect collision between spaceship and level for SOLID, SPECIAL, and HAZARD zones.
         Only considers non-transparent pixels of the spaceship.
         This combined method avoids duplicate pixel iteration.
         
@@ -132,7 +132,7 @@ class Level:
             spaceship_y (int): Y position of spaceship (top-left corner)
             
         Returns:
-            tuple: (solid_collision, special_collision) - both bool values
+            tuple: (solid_collision, special_collision, hazard_collision) - all bool values
         """
         # Get spaceship dimensions
         ship_width = spaceship_surface.get_width()
@@ -141,7 +141,7 @@ class Level:
         # Check bounds to avoid unnecessary pixel checking
         if (spaceship_x >= self.width or spaceship_y >= self.height or
             spaceship_x + ship_width <= 0 or spaceship_y + ship_height <= 0):
-            return False, False
+            return False, False, False
         
         # Calculate the overlapping region between spaceship and level
         # Convert float coordinates to integers for range operations
@@ -156,6 +156,7 @@ class Level:
         # Track collision types found
         solid_collision = False
         special_collision = False
+        hazard_collision = False
         
         # Check each pixel in the overlapping region
         for level_x in range(start_x, end_x):
@@ -183,17 +184,19 @@ class Level:
                             solid_collision = True
                         elif collision_type == 'SPECIAL':
                             special_collision = True
+                        elif collision_type == 'HAZARD':
+                            hazard_collision = True
                         
                         # Early exit optimization: if we found solid collision, no need to continue
                         # (since solid collision would stop the game anyway)
                         if solid_collision:
-                            return True, special_collision
+                            return True, special_collision, hazard_collision
                             
                 except (IndexError, pygame.error):
                     # Skip invalid pixels
                     continue
         
-        return solid_collision, special_collision
+        return solid_collision, special_collision, hazard_collision
 
     def get_visual_surface(self):
         """

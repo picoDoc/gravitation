@@ -12,6 +12,11 @@ class Spaceship(Entity):
     MAX_VELOCITY = 15
     MIN_VELOCITY = -15
     
+    # Collision physics constants
+    COLLISION_NORMAL_SAMPLE_DISTANCE = 40  # Pixels to sample around collision point for normal calculation
+    COLLISION_NORMAL_SAMPLE_STRIDE = 5  # Sample every Nth pixel on perimeter (higher = faster but less accurate)
+    COLLISION_DAMPING = 0.7  # Energy loss on collision (0.0 = no bounce, 1.0 = perfect bounce)
+    
     # Starting position constants - preserved from original main.py
     START_X_OFFSET = 1300  # spaceship_x = 1300 - spaceship_rect.width // 2
     START_Y = 2450
@@ -81,24 +86,102 @@ class Spaceship(Entity):
         """Apply constant gravity (matching original)"""
         self.physics.apply_gravity(self.GRAVITY)
     
-    def handle_collision(self, bounce_x=False, bounce_y=False):
-        """Handle collision with bouncing (matching original logic exactly)"""
-        # Apply bouncing by reversing velocity in appropriate directions
-        if bounce_x:
-            self.physics.velocity_x = -self.physics.velocity_x
-        elif bounce_y:
-            self.physics.velocity_y = -self.physics.velocity_y
+    def calculate_surface_normal(self, level, collision_x, collision_y):
+        """
+        Calculate surface normal by sampling all pixels on the perimeter of a box
+        around the collision point. This provides accurate normal vectors for
+        realistic bounce physics on surfaces at any angle.
+        
+        Args:
+            level: The level object with is_solid_collision method
+            collision_x: X coordinate of collision
+            collision_y: Y coordinate of collision
+            
+        Returns:
+            tuple: (normal_x, normal_y) - normalized perpendicular vector to surface
+        """
+        sample_dist = self.COLLISION_NORMAL_SAMPLE_DISTANCE
+        sample_stride = self.COLLISION_NORMAL_SAMPLE_STRIDE
+        gradient_x = 0
+        gradient_y = 0
+        
+        # Sample pixels on the perimeter of the box with a stride for efficiency
+        for dx in range(-sample_dist, sample_dist + 1, sample_stride):
+            for dy in range(-sample_dist, sample_dist + 1, sample_stride):
+                # Only check pixels on the perimeter (at least one coordinate at ±sample_dist)
+                if abs(dx) != sample_dist and abs(dy) != sample_dist:
+                    continue
+                
+                if level.is_solid_collision(collision_x + dx, collision_y + dy):
+                    gradient_x += dx
+                    gradient_y += dy
+        
+        # The gradient points toward solid pixels (into the surface)
+        # The normal should point away from solid (out of surface)
+        # So normal = -gradient (normalized)
+        normal_x = -gradient_x
+        normal_y = -gradient_y
+        
+        # Normalize to unit vector (length = 1)
+        magnitude = math.sqrt(normal_x**2 + normal_y**2)
+        
+        if magnitude > 0.01:  # Small threshold to avoid division by zero
+            normal_x /= magnitude
+            normal_y /= magnitude
         else:
-            # If neither direction specified, bounce both
-            self.physics.velocity_x = -self.physics.velocity_x
-            self.physics.velocity_y = -self.physics.velocity_y
+            # Fallback: if no clear direction, assume upward normal
+            normal_x = 0
+            normal_y = -1
         
-        # Rollback to previous position
+        return normal_x, normal_y
+    
+    def handle_collision(self, bounce_x=False, bounce_y=False, level=None, collision_x=None, collision_y=None):
+        """
+        Handle collision with realistic bounce physics.
+        
+        If level and collision coordinates are provided, uses normal-based reflection
+        for accurate bouncing off angled surfaces. Otherwise falls back to simple
+        axis-aligned bouncing.
+        
+        Args:
+            bounce_x: Bounce in X direction (for simple bouncing)
+            bounce_y: Bounce in Y direction (for simple bouncing)
+            level: Level object for normal calculation (optional)
+            collision_x: X coordinate of collision point (optional)
+            collision_y: Y coordinate of collision point (optional)
+        """
+        # Use normal-based reflection if we have level collision information
+        if level is not None and collision_x is not None and collision_y is not None:
+            # Calculate surface normal at collision point
+            normal_x, normal_y = self.calculate_surface_normal(level, collision_x, collision_y)
+            
+            # Get current velocity
+            vel_x = self.physics.velocity_x
+            vel_y = self.physics.velocity_y
+            
+            # Calculate dot product: v · n
+            # This tells us how much velocity is going "into" the surface
+            dot_product = vel_x * normal_x + vel_y * normal_y
+            
+            # Reflect velocity across the normal: v' = v - 2(v·n)n
+            self.physics.velocity_x = vel_x - 2 * dot_product * normal_x
+            self.physics.velocity_y = vel_y - 2 * dot_product * normal_y
+
+        else:
+            # Fallback to simple axis-aligned bouncing for boundary collisions
+            if bounce_x:
+                self.physics.velocity_x = -self.physics.velocity_x
+            elif bounce_y:
+                self.physics.velocity_y = -self.physics.velocity_y
+            else:
+                # If neither direction specified, bounce both
+                self.physics.velocity_x = -self.physics.velocity_x
+                self.physics.velocity_y = -self.physics.velocity_y
+        
+        # Rollback and apply damping
         self.rollback_position()
-        
-        # Reduce velocity significantly (matching original)
-        self.physics.velocity_x *= 0.5
-        self.physics.velocity_y *= 0.5
+        self.physics.velocity_x *= self.COLLISION_DAMPING
+        self.physics.velocity_y *= self.COLLISION_DAMPING
     
     def get_collision_rect_info(self):
         """Get information needed for collision detection"""
@@ -162,7 +245,7 @@ class Spaceship(Entity):
         """Check if spaceship collides with level at current position and rotation"""
         spaceship_image, collision_x, collision_y = self.get_collision_rect_info()
         if spaceship_image and level:
-            solid_collision, special_collision = level.check_spaceship_collisions(
+            solid_collision, special_collision, hazard_collision = level.check_spaceship_collisions(
                 spaceship_image, collision_x, collision_y
             )
             return solid_collision
