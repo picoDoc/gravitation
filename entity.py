@@ -48,9 +48,9 @@ class Physics:
         self.velocity_x += delta_x
         self.velocity_y += delta_y
     
-    def apply_gravity(self, gravity):
-        """Apply gravity to the velocity"""
-        self.velocity_y += gravity
+    def apply_gravity(self, gravity, delta_time=1.0):
+        """Apply gravity to the velocity with frame-rate independence"""
+        self.velocity_y += gravity * delta_time
     
     def clamp_velocity(self):
         """Clamp velocity to min/max bounds"""

@@ -21,6 +21,11 @@ class GameStateManager:
         self.current_state = GameState.MENU
         self.running = True
         
+        # Store current input state for frame-rate independent physics
+        self.current_thrust = False
+        self.current_rotate_left = False
+        self.current_rotate_right = False
+        
         # Initialize scoreboard session and ghosts
         self.session = RequestHandler()
         self.scoreboard = {}
@@ -239,7 +244,7 @@ class GameStateManager:
                 self.switch_to_playing(selected_level)
     
     def handle_game_input(self):
-        """Handle game input processing"""
+        """Handle game input processing - stores input state for frame-rate independent application"""
         current_time = pygame.time.get_ticks()
         joystick, thrust, rotate_left, rotate_right, back_to_menu, reset_level = self.input_manager.process_game_input()
         
@@ -252,14 +257,18 @@ class GameStateManager:
             self.switch_to_menu()
             return
         
-        # Apply spaceship controls if level is not completed
-        if not self.level_completed and self.spaceship:
-            self.spaceship.apply_thrust(thrust)
-            self.spaceship.apply_rotation(rotate_left, rotate_right, self.current_level)
+        # Store input state for application in update_gameplay() with delta_time
+        self.current_thrust = thrust
+        self.current_rotate_left = rotate_left
+        self.current_rotate_right = rotate_right
     
     def update_gameplay(self, delta_time=1.0):
         """Update gameplay logic with frame-rate independent physics"""
         if not self.level_completed and self.spaceship and self.current_level:
+            # Apply spaceship controls with delta_time for frame-rate independence
+            self.spaceship.apply_thrust(self.current_thrust, delta_time)
+            self.spaceship.apply_rotation(self.current_rotate_left, self.current_rotate_right, self.current_level, delta_time)
+            
             # Update spaceship physics with delta_time for frame-rate independence
             self.spaceship.update(delta_time)
             

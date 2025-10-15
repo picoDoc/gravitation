@@ -6,9 +6,9 @@ class Spaceship(Entity):
     """Spaceship entity with thrust and rotation capabilities"""
     
     # Physics constants - preserved from original main.py
-    GRAVITY = 0.12
-    THRUST_POWER = 0.25
-    ROTATION_SPEED = 6
+    GRAVITY = 0.08
+    THRUST_POWER = 0.15
+    ROTATION_SPEED = 3
     MAX_VELOCITY = 15
     MIN_VELOCITY = -15
     
@@ -43,8 +43,8 @@ class Spaceship(Entity):
         self.set_velocity(0, 0)
         self.set_rotation(0)
     
-    def apply_thrust(self, thrust_active):
-        """Apply thrust in the direction the spaceship is facing"""
+    def apply_thrust(self, thrust_active, delta_time=1.0):
+        """Apply thrust in the direction the spaceship is facing with frame-rate independence"""
         if thrust_active:
             # Convert rotation to radians for math functions (matching original)
             angle_rad = math.radians(self.transform.rotation)
@@ -52,22 +52,22 @@ class Spaceship(Entity):
             # Calculate thrust components (matching original logic exactly)
             # negative sin for x because pygame x increases right
             # negative cos for y because pygame y increases down, but we want up to be negative
-            thrust_x = self.THRUST_POWER * math.sin(angle_rad)
-            thrust_y = -self.THRUST_POWER * math.cos(angle_rad)
+            thrust_x = self.THRUST_POWER * math.sin(angle_rad) * delta_time
+            thrust_y = -self.THRUST_POWER * math.cos(angle_rad) * delta_time
             
             # Add thrust to velocity
             self.physics.add_velocity(thrust_x, thrust_y)
     
-    def apply_rotation(self, rotate_left, rotate_right, level=None):
-        """Apply rotation based on input with collision-free positioning"""
+    def apply_rotation(self, rotate_left, rotate_right, level=None, delta_time=1.0):
+        """Apply rotation based on input with collision-free positioning and frame-rate independence"""
         rotation_applied = False
         
         if rotate_left:
-            self.transform.rotate(-self.ROTATION_SPEED)
+            self.transform.rotate(-self.ROTATION_SPEED * delta_time)
             self.renderer.update_rotation(self.transform.rotation)
             rotation_applied = True
         elif rotate_right:
-            self.transform.rotate(self.ROTATION_SPEED)
+            self.transform.rotate(self.ROTATION_SPEED * delta_time)
             self.renderer.update_rotation(self.transform.rotation)
             rotation_applied = True
         
@@ -82,9 +82,9 @@ class Spaceship(Entity):
                     print(f"Collision-free rotation: moved to ({safe_position[0]:.1f}, {safe_position[1]:.1f})")
                 # If no safe position found, rotation is still allowed but spaceship stays in place
     
-    def apply_gravity(self):
-        """Apply constant gravity (matching original)"""
-        self.physics.apply_gravity(self.GRAVITY)
+    def apply_gravity(self, delta_time=1.0):
+        """Apply constant gravity with frame-rate independence"""
+        self.physics.apply_gravity(self.GRAVITY, delta_time)
     
     def calculate_surface_normal(self, level, collision_x, collision_y):
         """
@@ -226,9 +226,9 @@ class Spaceship(Entity):
         return bounce_x, bounce_y
     
     def update(self, delta_time=1.0):
-        """Update spaceship state"""
-        # Apply gravity every frame
-        self.apply_gravity()
+        """Update spaceship state with frame-rate independent physics"""
+        # Apply gravity every frame with delta_time
+        self.apply_gravity(delta_time)
         
         # Update physics (position based on velocity)
         self.update_physics(delta_time)

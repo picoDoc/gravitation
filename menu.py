@@ -122,6 +122,89 @@ class MenuState:
             return self.levels[self.selected_level_index]
         return None
     
+    def calculate_overall_rankings(self):
+        """Calculate overall rankings based on points from top 3 placements in each level
+        
+        Returns:
+            List of tuples: (rank, player_name, total_points, levels_completed)
+        """
+        # Points awarded for rankings: 1st=3pts, 2nd=2pts, 3rd=1pt
+        RANKING_POINTS = {0: 3, 1: 2, 2: 1}
+        
+        # Dictionary to track each player's points and level participation
+        player_stats = {}  # {player_name: {'points': int, 'levels': set()}}
+        
+        # Iterate through all levels in the scoreboard
+        for level_info in self.levels:
+            level_name = level_info.name
+            
+            # Skip if level not in scoreboard or has no scores
+            if level_name not in self.scoreboard or not self.scoreboard[level_name]:
+                continue
+            
+            # Get scores for this level and sort by time
+            level_scores = self.scoreboard[level_name]
+            sorted_players = sorted(level_scores.items(), key=lambda x: x[1])
+            
+            # Award points to top 3 players
+            for rank, (player, time) in enumerate(sorted_players[:3]):
+                if player not in player_stats:
+                    player_stats[player] = {'points': 0, 'levels': set()}
+                
+                # Add points for this ranking
+                player_stats[player]['points'] += RANKING_POINTS[rank]
+                # Track that this player completed this level
+                player_stats[player]['levels'].add(level_name)
+        
+        # Convert to list of tuples with rankings
+        rankings = []
+        for player, stats in player_stats.items():
+            rankings.append((
+                player,
+                stats['points'],
+                len(stats['levels'])
+            ))
+        
+        # Sort by points (descending), then by levels completed (descending) as tiebreaker
+        rankings.sort(key=lambda x: (x[1], x[2]), reverse=True)
+        
+        # Add rank numbers
+        final_rankings = []
+        for idx, (player, points, levels_completed) in enumerate(rankings):
+            final_rankings.append((idx + 1, player, points, levels_completed))
+        
+        return final_rankings
+    
+    def render_overall_leaderboard(self, screen):
+        """Render the overall leaderboard at the top of the menu"""
+        # Calculate rankings
+        rankings = self.calculate_overall_rankings()
+        
+        # Skip rendering if no rankings
+        if not rankings:
+            return
+        
+        # Position below the title
+        leaderboard_x = self.screen_width // 2
+        leaderboard_y = 180  # Below title
+        
+        # Title for overall leaderboard
+        overall_title = self.level_font.render("Overall Leaderboard", True, self.HIGHLIGHT_COLOR)
+        overall_title_rect = overall_title.get_rect(center=(leaderboard_x, leaderboard_y))
+        screen.blit(overall_title, overall_title_rect)
+        
+        # Render each player's ranking
+        current_y = leaderboard_y + 40
+        line_height = 30
+        
+        for rank, player, points, levels_completed in rankings:
+            # Format: 1. PlayerName: 12 pts (4 levels)
+            ranking_text = f"{rank}. {player}: {points} pts ({levels_completed} levels)"
+            ranking_surface = self.level_font.render(ranking_text, True, self.WHITE)
+            ranking_rect = ranking_surface.get_rect(center=(leaderboard_x, current_y))
+            screen.blit(ranking_surface, ranking_rect)
+            current_y += line_height
+    
     def render(self, screen):
         """Render the menu screen"""
         # Clear screen with black background
@@ -132,14 +215,12 @@ class MenuState:
         title_rect = title_text.get_rect(center=(self.screen_width // 2, 100))
         screen.blit(title_text, title_rect)
         
-        # Draw subtitle
-        subtitle_text = self.level_font.render("Select a Level", True, self.WHITE)
-        subtitle_rect = subtitle_text.get_rect(center=(self.screen_width // 2, 180))
-        screen.blit(subtitle_text, subtitle_rect)
+        # Render overall leaderboard
+        self.render_overall_leaderboard(screen)
         
         # Calculate starting position for thumbnails (left side, vertically arranged)
         thumbnail_x = 50  # Fixed position on left side
-        start_y = 300
+        start_y = 500  # Moved down to avoid overlap with leaderboard
         total_height = len(self.levels) * self.THUMBNAIL_SIZE[1] + (len(self.levels) - 1) * self.THUMBNAIL_SPACING
         
         # Draw thumbnails and level names
@@ -187,17 +268,3 @@ class MenuState:
                 no_data_text = self.level_font.render("No score data", True, self.BLUE)
                 no_data_rect = no_data_text.get_rect(left=(thumbnail_x + self.THUMBNAIL_SIZE[0] + 20), top=scoreboard_y)
                 screen.blit(no_data_text, no_data_rect)
-        
-        # Draw instructions on right side of screen
-        instructions = [
-            "Use Up/Down Arrow Keys or D-Pad to navigate",
-            "Press Enter or X button to select level"
-        ]
-        
-        instruction_x = self.screen_width // 2 + 100
-        instruction_y = start_y
-        for instruction in instructions:
-            instruction_text = self.level_font.render(instruction, True, self.WHITE)
-            instruction_rect = instruction_text.get_rect(left=instruction_x, top=instruction_y)
-            screen.blit(instruction_text, instruction_rect)
-            instruction_y += 50
