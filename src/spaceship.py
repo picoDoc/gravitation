@@ -1,6 +1,6 @@
 import pygame
 import math
-from entity import Entity
+from src.entity import Entity
 
 class Spaceship(Entity):
     """Spaceship entity with thrust and rotation capabilities"""
@@ -21,7 +21,7 @@ class Spaceship(Entity):
     START_X_OFFSET = 1300  # spaceship_x = 1300 - spaceship_rect.width // 2
     START_Y = 2450
     
-    def __init__(self, image_path="spaceship.png"):
+    def __init__(self, image_path="assets/images/sprites/spaceship.png"):
         super().__init__(0, 0, 0, image_path)
         
         # Set velocity limits

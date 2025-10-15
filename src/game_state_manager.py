@@ -1,14 +1,14 @@
 import pygame
 import platform
 import json
-from menu import GameState, MenuState
-from level import Level
-from spaceship import Spaceship
-from game_renderer import GameRenderer
-from input_manager import InputManager
-from timer import GameTimer
-from custom_request import RequestHandler
-from ghost_system import GhostRecorder, GhostPlayback, Ghost
+from src.menu import GameState, MenuState
+from src.level import Level
+from src.spaceship import Spaceship
+from src.game_renderer import GameRenderer
+from src.input_manager import InputManager
+from src.timer import GameTimer
+from src.custom_request import RequestHandler
+from src.ghost_system import GhostRecorder, GhostPlayback, Ghost
 
 class GameStateManager:
     """Manages game state transitions and coordinates game loop"""
@@ -166,10 +166,10 @@ class GameStateManager:
             print(f"Level {level_info.name} loaded successfully!")
             
             # Create spaceship
-            self.spaceship = Spaceship("spaceship.png")
+            self.spaceship = Spaceship("assets/images/sprites/spaceship.png")
             
             # Initialize ghost system
-            self.ghost = Ghost("spaceship.png")
+            self.ghost = Ghost("assets/images/sprites/spaceship.png")
             
             # Start playback of thecurrent best ghost if available
             if self.best_ghosts.get(level_info.name, []):

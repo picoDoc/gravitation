@@ -1,5 +1,5 @@
 import pygame
-from entity import Entity
+from src.entity import Entity
 
 class GhostFrame:
     """Represents a single frame of ghost data"""
@@ -152,7 +152,7 @@ class GhostPlayback:
 class Ghost(Entity):
     """Ghost entity that represents the recorded spaceship path"""
     
-    def __init__(self, image_path="spaceship.png"):
+    def __init__(self, image_path="assets/images/sprites/spaceship.png"):
         super().__init__(0, 0, 0, image_path)
         self.visible = False
         self.alpha = 128  # 50% transparency
@@ -166,13 +166,8 @@ class Ghost(Entity):
         # Create a copy of the original image with alpha channel
         transparent_image = self.renderer.original_image.copy().convert_alpha()
         
-        # Apply transparency to the entire image
-        for x in range(transparent_image.get_width()):
-            for y in range(transparent_image.get_height()):
-                pixel = transparent_image.get_at((x, y))
-                if pixel[3] > 0:  # If pixel is not fully transparent
-                    # Set alpha to our desired transparency level
-                    transparent_image.set_at((x, y), (pixel[0], pixel[1], pixel[2], self.alpha))
+        # Apply semi-transparency while respecting existing transparency
+        transparent_image.fill((255, 255, 255, self.alpha), special_flags=pygame.BLEND_RGBA_MULT)
         
         # Update the renderer with the transparent image
         self.renderer.original_image = transparent_image

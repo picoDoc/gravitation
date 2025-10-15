@@ -2,7 +2,7 @@ import pygame
 import sys
 import asyncio
 import platform
-from game_state_manager import GameStateManager
+from src.game_state_manager import GameStateManager
 
 # Display constants
 SCREEN_WIDTH = 1440

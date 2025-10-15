@@ -1,7 +1,7 @@
 import pygame
 import os
 from enum import Enum
-from level import Level
+from src.level import Level
 
 class GameState(Enum):
     """Enum to track current game state"""
@@ -48,10 +48,10 @@ class MenuState:
         """Initialize the available levels"""
         # Add the four levels as specified
         self.levels = [
-            LevelInfo("Ryan Level", "ryan_level.png"),
-            LevelInfo("John Level", "john_level.png"),
-            LevelInfo("Martin Level", "martin_level.png"),
-            LevelInfo("Slalom Level", "slalom.png")
+            LevelInfo("Ryan Level", "assets/images/levels/ryan_level.png"),
+            LevelInfo("John Level", "assets/images/levels/john_level.png"),
+            LevelInfo("Martin Level", "assets/images/levels/martin_level.png"),
+            LevelInfo("Slalom Level", "assets/images/levels/slalom.png")
         ]
         
         # Generate thumbnails for each level
