@@ -42,6 +42,16 @@ class MenuState:
         self.title_font = pygame.font.Font(None, self.MENU_TITLE_SIZE)
         self.level_font = pygame.font.Font(None, self.LEVEL_NAME_SIZE)
         
+        # Load logo
+        self.logo = None
+        self.logo_size = 540  # Size to scale logo to (50% larger than 360)
+        if os.path.exists("assets/images/logo/fist.png"):
+            try:
+                logo_image = pygame.image.load("assets/images/logo/fist.png")
+                self.logo = pygame.transform.scale(logo_image, (self.logo_size, self.logo_size))
+            except pygame.error as e:
+                print(f"Error loading logo: {e}")
+        
         self.initialize_levels()
     
     def initialize_levels(self):
@@ -211,9 +221,21 @@ class MenuState:
         screen.fill(self.BLACK)
         
         # Draw title
-        title_text = self.title_font.render("GRAVITATION", True, self.WHITE)
+        title_text = self.title_font.render("Fist Contact", True, self.WHITE)
         title_rect = title_text.get_rect(center=(self.screen_width // 2, 100))
         screen.blit(title_text, title_rect)
+        
+        # Draw logo on both sides of title (larger and closer to screen edges)
+        if self.logo:
+            # Left logo - positioned near left edge and lower down
+            left_logo_x = 30  # 50px from left edge
+            left_logo_y = 0  # Positioned lower (was centered at 100)
+            screen.blit(self.logo, (left_logo_x, left_logo_y))
+            
+            # Right logo - positioned near right edge and lower down
+            right_logo_x = self.screen_width - self.logo_size - 30  # 50px from right edge
+            right_logo_y = 0  # Positioned lower (was centered at 100)
+            screen.blit(self.logo, (right_logo_x, right_logo_y))
         
         # Render overall leaderboard
         self.render_overall_leaderboard(screen)

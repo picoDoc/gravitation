@@ -1,1 +1,1 @@
-# Gravitation Game Source Package
+# Game Source Package

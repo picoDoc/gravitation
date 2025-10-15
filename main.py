@@ -26,7 +26,7 @@ async def main():
     
     # Set up the display
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-    pygame.display.set_caption("Gravitation Game")
+    pygame.display.set_caption("Fist Contact")
     
     # Initialize the game state manager
     game_manager = GameStateManager(SCREEN_WIDTH, SCREEN_HEIGHT)
