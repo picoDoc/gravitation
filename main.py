@@ -89,6 +89,9 @@ async def main():
         dt_ms = clock.tick(60)
         # Normalize to a standard 60 FPS frame (16.67ms)
         delta_time = dt_ms / 16.67
+        # Cap delta_time to prevent physics issues during lag spikes or level loading
+        # Max 3x normal speed to handle brief frame drops without breaking physics
+        delta_time = min(delta_time, 3.0)
         await asyncio.sleep(0)  # This line is critical; ensure you keep the sleep time at 0
     
     # Quit (preserved from original)

@@ -34,6 +34,11 @@ class Level:
             'SPECIAL': (0, 0, 255)   # Blue - special areas
         }
         
+        # Collision masks for fast collision detection
+        self.solid_mask = None
+        self.special_mask = None
+        self.hazard_mask = None
+        
         self.load_level()
     
     def load_level(self):
@@ -55,8 +60,37 @@ class Level:
             self.width = self.collision_surface.get_width()
             self.height = self.collision_surface.get_height()
             
+            # Create collision masks for fast collision detection
+            self._create_collision_masks()
+            
         except pygame.error as e:
             raise RuntimeError(f"Failed to load level image {self.image_path}: {e}")
+    
+    def _create_collision_masks(self):
+        """Create pygame masks for each collision type using fast threshold operations."""
+        # Use pygame.mask.from_threshold for much faster mask creation
+        # This directly creates a mask from pixels matching a specific color
+        
+        # Create solid collision mask (black pixels)
+        self.solid_mask = pygame.mask.from_threshold(
+            self.collision_surface,
+            self.COLLISION_COLORS['SOLID'],  # Color to match
+            (1, 1, 1, 255)  # Threshold - allow exact match only
+        )
+        
+        # Create special collision mask (blue pixels)
+        self.special_mask = pygame.mask.from_threshold(
+            self.collision_surface,
+            self.COLLISION_COLORS['SPECIAL'],  # Color to match
+            (1, 1, 1, 255)  # Threshold - allow exact match only
+        )
+        
+        # Create hazard collision mask (red pixels)
+        self.hazard_mask = pygame.mask.from_threshold(
+            self.collision_surface,
+            self.COLLISION_COLORS['HAZARD'],  # Color to match
+            (1, 1, 1, 255)  # Threshold - allow exact match only
+        )
     
     def check_collision_at_point(self, x, y):
         """
@@ -122,9 +156,8 @@ class Level:
     
     def check_spaceship_collisions(self, spaceship_surface, spaceship_x, spaceship_y):
         """
-        Check for pixel-perfect collision between spaceship and level for SOLID, SPECIAL, and HAZARD zones.
-        Only considers non-transparent pixels of the spaceship.
-        This combined method avoids duplicate pixel iteration.
+        Check for collision between spaceship and level using pygame masks for fast detection.
+        This is much faster than pixel-by-pixel checking.
         
         Args:
             spaceship_surface (pygame.Surface): The rotated spaceship surface
@@ -134,67 +167,17 @@ class Level:
         Returns:
             tuple: (solid_collision, special_collision, hazard_collision) - all bool values
         """
-        # Get spaceship dimensions
-        ship_width = spaceship_surface.get_width()
-        ship_height = spaceship_surface.get_height()
+        # Create mask from spaceship surface (this is cached internally by pygame when possible)
+        spaceship_mask = pygame.mask.from_surface(spaceship_surface)
         
-        # Check bounds to avoid unnecessary pixel checking
-        if (spaceship_x >= self.width or spaceship_y >= self.height or
-            spaceship_x + ship_width <= 0 or spaceship_y + ship_height <= 0):
-            return False, False, False
+        # Calculate offset for mask overlap checking
+        # Offset is the position of the spaceship relative to the level
+        offset = (int(spaceship_x), int(spaceship_y))
         
-        # Calculate the overlapping region between spaceship and level
-        # Convert float coordinates to integers for range operations
-        spaceship_x_int = int(spaceship_x)
-        spaceship_y_int = int(spaceship_y)
-        
-        start_x = max(0, spaceship_x_int)
-        end_x = min(self.width, spaceship_x_int + ship_width)
-        start_y = max(0, spaceship_y_int)
-        end_y = min(self.height, spaceship_y_int + ship_height)
-        
-        # Track collision types found
-        solid_collision = False
-        special_collision = False
-        hazard_collision = False
-        
-        # Check each pixel in the overlapping region
-        for level_x in range(start_x, end_x):
-            for level_y in range(start_y, end_y):
-                # Calculate corresponding spaceship pixel coordinates
-                ship_pixel_x = level_x - spaceship_x_int
-                ship_pixel_y = level_y - spaceship_y_int
-                
-                # Skip if outside spaceship bounds (shouldn't happen but safety check)
-                if (ship_pixel_x < 0 or ship_pixel_x >= ship_width or
-                    ship_pixel_y < 0 or ship_pixel_y >= ship_height):
-                    continue
-                
-                # Get spaceship pixel (with alpha channel)
-                try:
-                    spaceship_pixel = spaceship_surface.get_at((ship_pixel_x, ship_pixel_y))
-                    spaceship_alpha = spaceship_pixel[3] if len(spaceship_pixel) > 3 else 255
-                    
-                    # Only check collision if spaceship pixel is not transparent
-                    if spaceship_alpha > 0:  # Non-transparent pixel
-                        # Check collision type at this level position
-                        collision_type = self.check_collision_at_point(level_x, level_y)
-                        
-                        if collision_type == 'SOLID':
-                            solid_collision = True
-                        elif collision_type == 'SPECIAL':
-                            special_collision = True
-                        elif collision_type == 'HAZARD':
-                            hazard_collision = True
-                        
-                        # Early exit optimization: if we found solid collision, no need to continue
-                        # (since solid collision would stop the game anyway)
-                        if solid_collision:
-                            return True, special_collision, hazard_collision
-                            
-                except (IndexError, pygame.error):
-                    # Skip invalid pixels
-                    continue
+        # Check for collisions using fast mask overlap
+        solid_collision = self.solid_mask.overlap(spaceship_mask, offset) is not None
+        special_collision = self.special_mask.overlap(spaceship_mask, offset) is not None
+        hazard_collision = self.hazard_mask.overlap(spaceship_mask, offset) is not None
         
         return solid_collision, special_collision, hazard_collision
 

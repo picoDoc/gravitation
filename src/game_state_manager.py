@@ -34,7 +34,7 @@ class GameStateManager:
         self.best_ghost_urls = {
             "Ryan Level": "https://api.jsonbin.io/v3/b/68c43384d0ea881f407ba93b",
             "John Level": "https://api.jsonbin.io/v3/b/68ca94be43b1c97be945f7db",
-            "Martin Level": "https://api.jsonbin.io/v3/b/68ca94d343b1c97be945f7f6",
+            "Cock Level": "https://api.jsonbin.io/v3/b/68ca94d343b1c97be945f7f6",
             "Slalom Level": "https://api.jsonbin.io/v3/b/68e536d543b1c97be95dbc50"
         }
         

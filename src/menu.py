@@ -60,8 +60,8 @@ class MenuState:
         self.levels = [
             LevelInfo("Ryan Level", "assets/images/levels/ryan_level.png"),
             LevelInfo("John Level", "assets/images/levels/john_level.png"),
-            LevelInfo("Martin Level", "assets/images/levels/martin_level.png"),
-            LevelInfo("Slalom Level", "assets/images/levels/slalom.png")
+            LevelInfo("Cock Level", "assets/images/levels/cock_level.png"),
+            LevelInfo("Slalom Level", "assets/images/levels/slalom_level.png")
         ]
         
         # Generate thumbnails for each level
